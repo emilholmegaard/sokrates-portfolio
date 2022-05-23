@@ -9,5 +9,7 @@
     "name" : "<LANDSCAPE name>",
     "repositories" : ["<Repository1>","<Repository2>"]
     }
-    ]
+    ],
+  "ignoreFilesForHistory" : ["*.gz", "*.tgz", "*.bz2", "*.tar", "*.z01", "*.pkl", "*.rar", "*.tag", "*.7z", "*.gz", "*.apk", "*.aab", "*.jar", "*.dll", "*.exe", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.gif", "*.pdf", "*.rtf", "*.doc", "*.docx", "*.ppt", "*.pptx", "*.jpi", "*.bak", "*.woff", "*.woff2", "*.otf", "*.ttf", "*.flv", "*.swf", "*.mp4", "*.mp3", "*.m4v", "*.mov", "*.3gp", "*.ico", "*.cfm", "*.db", "*.webm", "*.eot", "*.csv", "*.sdf"],
+  "ignoreFoldersForHistory": ["node_modules", "_vendor", "vendor", "Debug", "ext_libraries"]
 }
