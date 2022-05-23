@@ -95,6 +95,7 @@ const updatePortfolio = function () {
             sokratesGenerateReport(repoPath);
             sokratesUpdateLandscape(landscape.name)
         }
+        sokratesUpdateLandscape("");
     }
 }
 
