@@ -31,22 +31,22 @@ const execHelper = function (command) {
 };
 
 const sokratesExtractHistory = function (repoPath) {
-    await execHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' extractGitHistory');
+    execHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' extractGitHistory');
 };
 
 const sokratesInit = function (repoPath) {
     if (!fs.existsSync(repoPath + sokratesConfigPathAppender)) {
-        await execHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' init');
+        execHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' init');
     }
 };
 
 const sokratesGenerateReport = function (repoPath) {
-    await execHelper('cd ' + repoPath + ' && java -jar ' + javaOptions + ' ' + sokratesJarFilePath + ' generateeports');
+    execHelper('cd ' + repoPath + ' && java -jar ' + javaOptions + ' ' + sokratesJarFilePath + ' generateeports');
 };
 
 
 const sokratesUpdateLandscape = function (landscape) {
-    await execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape')
+    execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape')
 };
 
 const optimizeForLandscape = function (repoPath, landscape) {
@@ -62,9 +62,9 @@ const getSourceCode = function (repo, landscape) {
 
     if (!fs.existsSync(repoPath)) {
         let repository = 'https://' + PAT + '@' + gitBaseUrl + repo;
-        await execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && git clone ' + repository);
+        execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && git clone ' + repository);
     } else {
-        await execHelper('cd ' + repoPath + ' && git pull');
+        execHelper('cd ' + repoPath + ' && git pull');
     }
 };
 
@@ -73,9 +73,9 @@ const updatePortfolio = function () {
         for (repository in landscape.repositories) {
             let repoPath = sokratesPortfolio + '/' + landscape + '/' + repo.split('/')[-1]
             getSourceCode(repository, landscape.name);
-            await sokratesExtractHistory(repoPath);
-            await sokratesInit(repoPath);
-            await sokratesGenerateReport(repoPath);
+            sokratesExtractHistory(repoPath);
+            sokratesInit(repoPath);
+            sokratesGenerateReport(repoPath);
             sokratesUpdateLandscape(landscape.name)
         }
     }
