@@ -5,6 +5,7 @@ const config = JSON.parse(fs.readFileSync('config.json'));
 const sokratesConfigPathAppender = '/_sokrates/config.json';
 const sokratesJarFilePath = config.sokratesJarFilePath;
 const PAT = config.PAT;
+const Base64PAT = base64EncodePat();
 const gitBaseUrl = config.baseUrl;
 const javaOptions = config.javaOptions;
 const sokratesPortfolio = config.sokratesPortfolio
@@ -12,6 +13,13 @@ const sokratesLandscapes = config.landscapes
 
 const ignoreFolders = config.ignoreFoldersForHistory;
 const ignoreFiles = config.ignoreFilesForHistory;
+
+
+const base64EncodePat = function () {
+    usernameAndPAT = ':'+PAT;
+    let buff = new Buffer(usernameAndPAT);
+    return buff.toString('base64');
+};
 
 
 
@@ -76,8 +84,8 @@ const getSourceCode = function (repo, landscape) {
     }
 
     if (!fs.existsSync(repoPath)) {
-        let repository = 'https://' + PAT + '@' + gitBaseUrl + '/' + repo;
-        execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && git clone ' + repository);
+        let repository = 'https://' + gitBaseUrl + '/' + repo;
+        execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && git -c http.extraHeader="Authorization: Basic '+ Base64PAT +'" clone ' + repository);
     } else {
         execHelper('cd ' + repoPath + ' && git pull');
     }
