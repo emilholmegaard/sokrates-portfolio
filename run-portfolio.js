@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { execSync, exec } = require('child_process');
+const { execSync, exec, spawn } = require('child_process');
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 const sokratesConfigPathAppender = '/_sokrates/config.json';
@@ -27,90 +27,146 @@ const execHelper = function (command) {
         });
 
     child.on('exit', function (code, signal) {
-        console.log('child process exited with ' +
-            `code ${code} and signal ${signal}`);
+        if (code > 0) {
+            console.log('child process exited with ' +
+                `code ${code} and signal ${signal}`);
+        }
     });
     return true;
 };
 
-const execSyncHelper = function (command) {
-    child = execSync(command);
+async function spawnHelper(instruction, arguments, spawnOpts = {}, silenceOutput = false) {
 
-    return true;
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
 
+
+            let errorData = "";
+
+            if (process.env.DEBUG_COMMANDS === "true") {
+                console.log(`Executing \`${instruction}\``);
+                console.log("Command", instruction, "Args", arguments);
+            }
+            console.log(instruction);
+            console.log(arguments);
+            console.log(spawnOpts);
+            const spawnedProcess = spawn(instruction, arguments, spawnOpts);
+
+            let data = "";
+
+            spawnedProcess.on("message", console.log);
+
+            spawnedProcess.stdout.on("data", chunk => {
+                if (!silenceOutput) {
+                    console.log(chunk.toString());
+                }
+
+                data += chunk.toString();
+            });
+
+            spawnedProcess.stderr.on("data", chunk => {
+                errorData += chunk.toString();
+            });
+
+            spawnedProcess.on("close", function (code) {
+                if (code > 0) {
+                    return reject(new Error(`${errorData} (Failed Instruction: ${instruction})(Arguments: ${arguments})`));
+                }
+
+                resolve(data);
+            });
+
+            spawnedProcess.on("error", function (err) {
+                reject(err);
+            });
+        });
+    }, 1000 * 60 * 10);
 };
-const sokratesExtractHistory = function (repoPath) {
-    execHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' extractGitHistory');
+
+const sokratesExtractHistory = async function (repoPath) {
+    let arguments = ['-jar', sokratesJarFilePath, 'extractGitHistory'];
+    await spawnHelper('java', arguments, { cwd: repoPath });
 };
 
-const sokratesInit = function (repoPath) {
+const sokratesInit = async function (repoPath) {
     if (!fs.existsSync(repoPath + sokratesConfigPathAppender)) {
-        execSyncHelper('cd ' + repoPath + ' && java -jar ' + sokratesJarFilePath + ' init');
+        execHelper('cd ' + repoPath + '&& java -jar ' + sokratesJarFilePath + ' init');
     }
 };
 
-const sokratesGenerateReport = function (repoPath) {
-    execHelper('cd ' + repoPath + ' && java -jar ' + javaOptions + ' ' + sokratesJarFilePath + ' generateeports');
+const sokratesGenerateReport = async function (repoPath) {
+    await spawnHelper('java', ['-jar', javaOptions, sokratesJarFilePath, 'generateReports'], { cwd: repoPath });
 };
 
 
-const moveResultsToLandscape = function (analysisPath, landscapePath) {
-    execSyncHelper('cp '+ analysisPath + '/_sokrates '+ landscapePath);
+const moveResultsToLandscape = async function (analysisPath, landscapePath) {
+    let sokratesFolderPath = analysisPath + '/_sokrates';
+    if (fs.existsSync(landscapePath) && fs.existsSync(sokratesFolderPath)) {
+        execHelper('rm -rf ' + landscapePath);
+    }
+    execHelper('cp -R ' + sokratesFolderPath + ' ' + landscapePath);
 };
 
-const sokratesUpdateLandscape = function (landscape) {
-    execHelper('cd ' + sokratesPortfolio + '/' + landscape + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape')
+const sokratesUpdateLandscape = async function (landscape) {
+    let path = sokratesPortfolio + landscape;
+    console.log("Updates landscape: " + path);
+    execHelper('cd ' + path + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape');
 };
 
-const cleanFolderIgnores = function (repoPath) {
+const cleanFolderIgnores = async function (repoPath) {
     for (const folder of ignoreFolders) {
-        execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -rf {} +');
+        execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -rf {} \\;');
     }
 };
-const cleanFileIgnores = function (repoPath) {
+const cleanFileIgnores = async function (repoPath) {
     for (const file of ignoreFiles) {
         execHelper('cd ' + repoPath + ' && find . -type f -name "' + file + '" -delete');
     }
 };
-const optimizeForLandscape = function (repoPath, landscape) {
+const optimizeForLandscape = async function (repoPath) {
     cleanFolderIgnores(repoPath);
     cleanFileIgnores(repoPath);
 };
 
-const getSourceCode = function (repo, landscape, analysisPath, landscapePath) {
+const getSourceCode = async function (repo, landscape, analysisPath) {
 
     if (!fs.existsSync(sokratesPortfolio + '/' + landscape)) {
         fs.mkdirSync(sokratesPortfolio + '/' + landscape);
     }
 
     if (!fs.existsSync(analysisPath)) {
-        let repository = 'https://'+ gitUser + '@' + gitBaseUrl + '/' + repo;
-        let cloneCommand = 'git -c http.extraHeader="Authorization: Basic '+ PAT +'" clone ' + repository;
-	console.log(cloneCommand);
-	execSyncHelper('cd ' + sokratesAnalysis + ' && ' + cloneCommand);
+        let repository = 'https://' + gitUser + '@' + gitBaseUrl + '/' + repo;
+        let cloneCommand = 'git -c http.extraHeader="Authorization: Basic ' + PAT + '" clone ' + repository;
+        console.log('Clone: ');
+        console.log(cloneCommand);
+        execHelper('cd ' + sokratesAnalysis + ' && ' + cloneCommand);
     } else {
-        execSyncHelper('cd ' + analysisPath + ' && git -c http.extraHeader="Authorization: Basic '+ PAT +'" pull');
+        let pullCommand = 'git -c http.extraHeader="Authorization: Basic ' + PAT + '" pull';
+        console.log('Pull: ');
+        console.log(pullCommand);
+        execHelper('cd ' + analysisPath + ' && ' + pullCommand);
     }
 };
 
-const updatePortfolio = function () {
+const updatePortfolio = async function () {
     for (const landscape of sokratesLandscapes) {
         for (const repository of landscape.repositories) {
             let landscapePath = sokratesPortfolio + '/' + landscape.name + '/' + repository.split('/').pop();
             let analysisPath = sokratesAnalysis + '/' + repository.split('/').pop();
-            console.log("lanscapePath: "+landscapePath);
-	        console.log("analysisPath: "+analysisPath);
-            getSourceCode(repository, landscape.name, analysisPath, landscapePath);
-            sokratesExtractHistory(analysisPath);
-            sokratesInit(analysisPath);
-            optimizeForLandscape(analysisPath);
-            sokratesGenerateReport(analysisPath);
-     	    execSync('sleep 5000');
-	        moveResultsToLandscape(analysisPath, landscapePath);
+            console.log("landscapePath: " + landscapePath);
+            console.log("analysisPath: " + analysisPath);
+            let source = await getSourceCode(repository, landscape.name, analysisPath);
+            let extractor = await sokratesExtractHistory(analysisPath);
+            let init = await sokratesInit(analysisPath);
+            let optimizer = await optimizeForLandscape(analysisPath);
+            let reports = await sokratesGenerateReport(analysisPath);
+            let move = await moveResultsToLandscape(analysisPath, landscapePath);
         }
-	    sokratesUpdateLandscape(landscape.name);
-        }
-	sokratesUpdateLandscape("");
+        console.log("Update landscape: " + landscape.name);
+        let landscape_ = await sokratesUpdateLandscape('/' + landscape.name);
+    }
+    console.log("Update overall landscape");
+    let landscape__ = await sokratesUpdateLandscape("");
 }
 
 
