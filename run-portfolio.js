@@ -149,6 +149,7 @@ const getSourceCode = async function (repo, landscape, analysisPath) {
 };
 
 const updatePortfolio = async function () {
+    let singleTimeout = 1000*60*15;
     for (const landscape of sokratesLandscapes) {
         for (const repository of landscape.repositories) {
             let landscapePath = sokratesPortfolio + '/' + landscape.name + '/' + repository.split('/').pop();
@@ -162,11 +163,12 @@ const updatePortfolio = async function () {
             let reports = await sokratesGenerateReport(analysisPath);
             let move = await moveResultsToLandscape(analysisPath, landscapePath);
         }
-        console.log("Update landscape: " + landscape.name);
-        let landscape_ = await sokratesUpdateLandscape('/' + landscape.name);
+        setTimeout(() => { console.log("Update landscape: " + landscape.name) }, singleTimeout);
+        setTimeout(() => { sokratesUpdateLandscape('/' + landscape.name) }, singleTimeout);
     }
-    console.log("Update overall landscape");
-    let landscape__ = await sokratesUpdateLandscape("");
+    let overallTimeout = singleTimeout*sokratesLandscapes.length;
+    setTimeout(() => { console.log("Update overall landscape") }, overallTimeout);
+    setTimeout(() => { sokratesUpdateLandscape("") }, overallTimeout);
 }
 
 
