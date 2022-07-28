@@ -115,7 +115,7 @@ const sokratesUpdateLandscape = async function (landscape) {
 
 const cleanFolderIgnores = async function (repoPath) {
     for (const folder of ignoreFolders) {
-        execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -R {} \\;');
+        execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -rf {} \\;');
     }
 };
 const cleanFileIgnores = async function (repoPath) {
