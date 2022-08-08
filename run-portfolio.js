@@ -15,6 +15,9 @@ const sokratesLandscapes = config.landscapes;
 const ignoreFolders = config.ignoreFoldersForHistory;
 const ignoreFiles = config.ignoreFilesForHistory;
 
+const processTimeout = 1000 * 60 * 10;
+const singleTimeout = processTimeout*3;
+
 const execHelper = function (command) {
     child = exec(command,
         function (error, stdout, stderr) {
@@ -80,7 +83,7 @@ async function spawnHelper(instruction, arguments, spawnOpts = {}, silenceOutput
                 reject(err);
             });
         });
-    }, 1000 * 60 * 10);
+    }, processTimeout);
 };
 
 const sokratesExtractHistory = async function (repoPath) {
@@ -90,7 +93,7 @@ const sokratesExtractHistory = async function (repoPath) {
 
 const sokratesInit = async function (repoPath) {
     if (!fs.existsSync(repoPath + sokratesConfigPathAppender)) {
-        execHelper('cd ' + repoPath + '&& java -jar ' + sokratesJarFilePath + ' init');
+        await execHelper('cd ' + repoPath + '&& java -jar ' + sokratesJarFilePath + ' init');
     }
 };
 
@@ -102,7 +105,7 @@ const sokratesGenerateReport = async function (repoPath) {
 const moveResultsToLandscape = async function (analysisPath, landscapePath) {
     let sokratesFolderPath = analysisPath + '/_sokrates';
     if (fs.existsSync(landscapePath) && fs.existsSync(sokratesFolderPath)) {
-        execHelper('rm -rf ' + landscapePath);
+        await execHelper('rm -rf ' + landscapePath);
     }
     execHelper('cp -R ' + sokratesFolderPath + ' ' + landscapePath);
 };
@@ -110,22 +113,22 @@ const moveResultsToLandscape = async function (analysisPath, landscapePath) {
 const sokratesUpdateLandscape = async function (landscape) {
     let path = sokratesPortfolio + landscape;
     console.log("Updates landscape: " + path);
-    execHelper('cd ' + path + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape');
+    await execHelper('cd ' + path + ' && java -jar ' + sokratesJarFilePath + ' updateLandscape');
 };
 
 const cleanFolderIgnores = async function (repoPath) {
     for (const folder of ignoreFolders) {
-        execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -rf {} \\;');
+        await execHelper('cd ' + repoPath + ' && find . -type d -name "' + folder + '" -exec rm -rf {} \\;');
     }
 };
 const cleanFileIgnores = async function (repoPath) {
     for (const file of ignoreFiles) {
-        execHelper('cd ' + repoPath + ' && find . -type f -name "' + file + '" -delete');
+        await execHelper('cd ' + repoPath + ' && find . -type f -name "' + file + '" -delete');
     }
 };
 const optimizeForLandscape = async function (repoPath) {
-    cleanFolderIgnores(repoPath);
-    cleanFileIgnores(repoPath);
+    await cleanFolderIgnores(repoPath);
+    await cleanFileIgnores(repoPath);
 };
 
 const getSourceCode = async function (repo, landscape, analysisPath) {
@@ -139,17 +142,21 @@ const getSourceCode = async function (repo, landscape, analysisPath) {
         let cloneCommand = 'git -c http.extraHeader="Authorization: Basic ' + PAT + '" clone ' + repository;
         console.log('Clone: ');
         console.log(cloneCommand);
-        execHelper('cd ' + sokratesAnalysis + ' && ' + cloneCommand);
+        await execHelper('cd ' + sokratesAnalysis + ' && ' + cloneCommand);
     } else {
         let pullCommand = 'git -c http.extraHeader="Authorization: Basic ' + PAT + '" pull';
         console.log('Pull: ');
         console.log(pullCommand);
-        execHelper('cd ' + analysisPath + ' && ' + pullCommand);
+        await execHelper('cd ' + analysisPath + ' && ' + pullCommand);
     }
 };
 
 const updatePortfolio = async function () {
-    let singleTimeout = 1000*60*15;
+    let overallTimeout =0;
+    for (const landscape of sokratesLandscapes) {
+            overallTimeout += singleTimeout*landscape.repositories.length;
+    }
+    
     for (const landscape of sokratesLandscapes) {
         for (const repository of landscape.repositories) {
             let landscapePath = sokratesPortfolio + '/' + landscape.name + '/' + repository.split('/').pop();
@@ -163,10 +170,9 @@ const updatePortfolio = async function () {
             let reports = await sokratesGenerateReport(analysisPath);
             let move = await moveResultsToLandscape(analysisPath, landscapePath);
         }
-        setTimeout(() => { console.log("Update landscape: " + landscape.name) }, singleTimeout);
-        setTimeout(() => { sokratesUpdateLandscape('/' + landscape.name) }, singleTimeout);
+        setTimeout(() => { console.log("Update landscape: " + landscape.name) }, singleTimeout*landscape.repositories.length);
+        setTimeout(() => { sokratesUpdateLandscape('/' + landscape.name) }, singleTimeout*landscape.repositories.length);
     }
-    let overallTimeout = singleTimeout*sokratesLandscapes.length;
     setTimeout(() => { console.log("Update overall landscape") }, overallTimeout);
     setTimeout(() => { sokratesUpdateLandscape("") }, overallTimeout);
 }
