@@ -2,7 +2,7 @@
 {
   "baseUrl": "<INSERT URL fx. dev.azure.com/<<ORG>> >",
   "Base64PAT": "<INSERT PAT as base64 encoded string>",
-  "defaultUser": "<INSERT USER - eg ORG>"
+  "defaultUser": "<INSERT USER - eg ORG>",
   "sokratesJarFilePath": "<INSERT full path to sokrates-LATEST.jar>",
   "sokratesPortfolio": "<INSERT full path to location of portfolio>",
   "sokratesAnalysisLocation": "<INSERT full path to location of analysis>",
