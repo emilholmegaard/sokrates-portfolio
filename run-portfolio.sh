@@ -72,7 +72,7 @@ getSourceCode() {
     PAT=$6
     if [ ! -d $analysisPath ]; then
         repository="https://${gitUser}@${gitBaseUrl}/${repositoryName}"
-        cd $sokratesAnalysis && git -c http.extraHeader="Authorization: Basic $PAT" clone $repository
+        cd $sokratesAnalysisLocation && git -c http.extraHeader="Authorization: Basic $PAT" clone $repository
     else
         cd $analysisPath && git -c http.extraHeader="Authorization: Basic $PAT" pull
 
@@ -80,7 +80,7 @@ getSourceCode() {
 }
 
 
-config='/mnt/c/Users/Emhol/git/sokrates-portfolio/config_local_test.json'
+config=$1
 sokratesConfigPathAppender='/_sokrates/config.json'
 sokratesJarFilePath=$(cat $config | jq -r '.sokratesJarFilePath')
 javaOptions=$(cat $config | jq -r '.javaOptions')
