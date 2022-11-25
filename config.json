@@ -1,11 +1,14 @@
 
 {
   "baseUrl": "<INSERT URL fx. dev.azure.com/<<ORG>> >",
-  "Base64PAT": "<INSERT PAT as base64 encoded string>",
+  "Base64PAT": "<INSERT PAT >",
   "defaultUser": "<INSERT USER - eg ORG>",
   "sokratesJarFilePath": "<INSERT full path to sokrates-LATEST.jar>",
   "sokratesPortfolio": "<INSERT full path to location of portfolio>",
   "sokratesAnalysisLocation": "<INSERT full path to location of analysis>",
+  "sokratesConventionsFile": "<INSERT full path to cenventionFile or leave empty>",
+  "removeSokratesArtefactsBeforeAnalysis": "<true if all previous results should be removed>",
+  "systemsAreMicroservices": "<true if source for each landscape should be analyzed as one system>",
   "javaOptions": "-Xmx28g",
   "landscapes" : [ {
     "name" : "<LANDSCAPE name>",
