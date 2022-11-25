@@ -109,28 +109,6 @@ getSourceCode() {
     cp -R $repoPath $aggregated_landscape
 }
 
-mergeConfigs(){
-    repoPath=$1
-    analysisPath=$2
-    aggregated_landscape=$3
-    sokratesConfigPathAppender=$4
-    
-   
-    landscape_config="${aggregated_landscape}/${sokratesConfigPathAppender}"
-    repo_config="${repoPath}/${sokratesConfigPathAppender}"
-
-    extensions=jq -s '.[0].extensions += .[1].extensions' $landscape_config $repo_config
-    ignore=jq -s '.[0].ignore += .[1].ignore' $landscape_config $extensions
-    main=jq -s '.[0].main.sourceFileFilters += .[1].main.sourceFileFilters' $landscape_config $ignore
-    test=jq -s '.[0].test.sourceFileFilters += .[1].test.sourceFileFilters' $landscape_config $main
-    genereated=jq -s '.[0].genereated.sourceFileFilters += .[1].genereated.sourceFileFilters' $landscape_config $test
-    buildAndDeployment=jq -s '.[0].buildAndDeployment.sourceFileFilters += .[1].buildAndDeployment.sourceFileFilters' $landscape_config $genereated
-    other=jq -s '.[0].other.sourceFileFilters += .[1].other.sourceFileFilters' $landscape_config $buildAndDeployment
-    echo $other > $landscape_config
-  
-}
-
-
 removeArtifacts(){
   analysisPath=$1
   cd $analysisPath && cd _sokrates && rm -r findings && rm -r history && rm -r reports
@@ -195,15 +173,6 @@ for item in $(cat $config | jq -c '.landscapes[]'); do
         aggregated_landscape="${sokratesAnalysisLocation}/Aggregated_${landscapeName}" 
         sokratesInit $aggregated_landscape $sokratesJarFilePath $sokratesConfigPathAppender $sokratesConventionsFile
         
-        #for repoItem in $(jq '.repositories[]' <<<"$item"); do
-        #    repositoryName=$(basename ${repoItem})
-        #    repositoryName="${repositoryName%\"}"
-        #    repositoryName="${repositoryName#\"}"
-        #    analysisPath="${sokratesAnalysisLocation}/${repositoryName}"
-            
-        #    mergeConfigs $analysisPath $sokratesAnalysisLocation $aggregated_landscape $sokratesConfigPathAppender
-        
-        #done
         sokratesGenerateReport $aggregated_landscape $sokratesJarFilePath $javaOptions
     fi
     sokratesUpdateLandscape "/${landscapeName}" $sokratesJarFilePath $sokratesPortfolio
