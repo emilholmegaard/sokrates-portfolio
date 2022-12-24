@@ -114,7 +114,11 @@ removeArtifacts(){
   cd $analysisPath && cd _sokrates && rm -r findings && rm -r history && rm -r reports
 }
 
-config=$1
+if [ -z "$1" ]; then
+config="${BASH_SOURCE%/*}/config.json"
+else
+config=$1 
+fi
 sokratesConfigPathAppender='/_sokrates/config.json'
 sokratesJarFilePath=$(cat $config | jq -r '.sokratesJarFilePath')
 sokratesConventionsFile=$(cat $config | jq -r '.sokratesConventionsFile')
@@ -146,13 +150,13 @@ for item in $(cat $config | jq -c '.landscapes[]'); do
         
         prepareLandscape $sokratesPortfolio $landscapeName
     
-        if [ "$removeSokratesArtefactsBeforeAnalysis" ]; then
+         if [ "$removeSokratesArtefactsBeforeAnalysis" = true ]; then
             removeArtifacts $analysisPath
         fi
     
         getSourceCode $repositoryName $analysisPath $sokratesAnalysisLocation $gitUser $gitBaseUrl $PAT
         
-        if [ "$systemsAreMicroservices" ]; then
+        if [ "$systemsAreMicroservices" = true ]; then
             aggregated_landscape="${sokratesAnalysisLocation}/Aggregated_${landscapeName}" 
             copyForMicroServiceLandscape $analysisPath $sokratesAnalysisLocation $aggregated_landscape
         fi
@@ -169,7 +173,7 @@ for item in $(cat $config | jq -c '.landscapes[]'); do
        
     done
 
-    if [ "$systemsAreMicroservices" ]; then
+    if [ "$systemsAreMicroservices" = true ]; then
         aggregated_landscape="${sokratesAnalysisLocation}/Aggregated_${landscapeName}" 
         sokratesInit $aggregated_landscape $sokratesJarFilePath $sokratesConfigPathAppender $sokratesConventionsFile
         
