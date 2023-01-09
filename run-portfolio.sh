@@ -12,7 +12,7 @@ sokratesInit() {
     sokratesConventionsFile=$4
 
     DIR=$repoPath+$sokratesConfigPathAppender
-    if [ ! -d $DIR ]; then
+    if [ ! - d "$DIR" ]; then
         if [ -z "$sokratesConventionsFile" ]; then
         cd $repoPath && java -jar $sokratesJarFilePath init
         else
@@ -79,14 +79,14 @@ getSourceCode() {
     Azure='azure'
     if [[ "$gitBaseUrl" == *"$Azure"* ]]; then
         B64_PAT=$(printf "%s"":$PAT" | base64)
-        if [ ! -d $analysisPath ]; then
+        if [ ! -d "$analysisPath" ]; then
             repository="https://${gitUser}@${gitBaseUrl}/${repositoryName}"
             cd $sokratesAnalysisLocation && git -c http.extraHeader="Authorization: Basic $B64_PAT" clone $repository
         else
             cd $analysisPath && git -c http.extraHeader="Authorization: Basic $B64_PAT" pull
         fi
     else
-        if [ ! -d $analysisPath ]; then
+        if [ ! -d "$analysisPath" ]; then
             repository="https://${gitUser}:${PAT}@${gitBaseUrl}/${repositoryName}.git"
             cd $sokratesAnalysisLocation && git clone $repository
         else
@@ -103,7 +103,7 @@ getSourceCode() {
     repoPath=$1 
     aggregated_landscape=$3
    
-     if [ ! -d $aggregated_landscape ]; then
+     if [ ! -d "$aggregated_landscape" ]; then
         mkdir $aggregated_landscape
     fi
     cp -R $repoPath $aggregated_landscape
