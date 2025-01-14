@@ -12,7 +12,7 @@ sokratesInit() {
     sokratesConventionsFile=$4
 
     DIR=$repoPath+$sokratesConfigPathAppender
-    if [ ! - d "$DIR" ]; then
+    if [ ! -d "$DIR" ]; then
         if [ -z "$sokratesConventionsFile" ]; then
         cd $repoPath && java -jar $sokratesJarFilePath init
         else
@@ -75,13 +75,16 @@ getSourceCode() {
     gitUser=$4
     gitBaseUrl=$5
     PAT=$6
-
+    repoItem=$7
+    echo $gitBaseUrl
+    
     Azure='azure'
     if [[ "$gitBaseUrl" == *"$Azure"* ]]; then
         B64_PAT=$(printf "%s"":$PAT" | base64)
         if [ ! -d "$analysisPath" ]; then
-            repository="https://${gitUser}@${gitBaseUrl}/${repositoryName}"
-            cd $sokratesAnalysisLocation && git -c http.extraHeader="Authorization: Basic $B64_PAT" clone $repository
+            repository="https://${PAT}@${gitBaseUrl}/${repoItem}"
+            echo $repository
+            cd $sokratesAnalysisLocation && git clone $repository
         else
             cd $analysisPath && git -c http.extraHeader="Authorization: Basic $B64_PAT" pull
         fi
@@ -111,7 +114,9 @@ getSourceCode() {
 
 removeArtifacts(){
   analysisPath=$1
-  cd $analysisPath && cd _sokrates && rm -r findings && rm -r history && rm -r reports
+  if [ -d "$analysisPath" ]; then
+    cd $analysisPath && cd _sokrates && rm -r findings && rm -r history && rm -r reports
+  fi
 }
 
 if [ -z "$1" ]; then
@@ -140,6 +145,9 @@ for item in $(cat $config | jq -c '.landscapes[]'); do
     landscapeName="${landscapeName#\"}"
     echo "Starting analysis of $landscapeName"
     for repoItem in $(jq '.repositories[]' <<<"$item"); do
+        repoFullName=${repoItem}
+        repoFullName="${repoFullName%\"}"
+        repoFullName="${repoFullName#\"}"
         repositoryName=$(basename ${repoItem})
         repositoryName="${repositoryName%\"}"
         repositoryName="${repositoryName#\"}"
@@ -154,7 +162,7 @@ for item in $(cat $config | jq -c '.landscapes[]'); do
             removeArtifacts $analysisPath
         fi
     
-        getSourceCode $repositoryName $analysisPath $sokratesAnalysisLocation $gitUser $gitBaseUrl $PAT
+        getSourceCode $repositoryName $analysisPath $sokratesAnalysisLocation $gitUser $gitBaseUrl $PAT $repoFullName
         
         if [ "$systemsAreMicroservices" = true ]; then
             aggregated_landscape="${sokratesAnalysisLocation}/Aggregated_${landscapeName}" 
